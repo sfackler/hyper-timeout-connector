@@ -4,3 +4,5 @@ version = "0.1.0"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
 
 [dependencies]
+hyper = "0.10"
+socket2 = { git = "https://github.com/sfackler/socket2-rs", branch = "connect-timeout" }
