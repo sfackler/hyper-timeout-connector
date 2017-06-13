@@ -87,13 +87,13 @@ impl HttpTimeoutConnector {
         self.connect_timeout = timeout;
     }
 
-    fn connect_once(&self, addr: &SocketAddr) -> io::Result<TcpStream> {
-        let domain = match *addr {
+    fn connect_once(&self, addr: SocketAddr) -> io::Result<TcpStream> {
+        let domain = match addr {
             SocketAddr::V4(_) => Domain::ipv4(),
             SocketAddr::V6(_) => Domain::ipv6(),
         };
         let socket = Socket::new(domain, Type::stream(), None)?;
-        let addr = SockAddr::from(*addr);
+        let addr = SockAddr::from(addr);
         match self.connect_timeout {
             Some(timeout) => socket.connect_timeout(&addr, timeout)?,
             None => socket.connect(&addr)?,
@@ -114,7 +114,7 @@ impl NetworkConnector for HttpTimeoutConnector {
 
         let mut last_err = None;
         for addr in (host, port).to_socket_addrs()? {
-            match self.connect_once(&addr) {
+            match self.connect_once(addr) {
                 Ok(l) => return Ok(HttpStream(l)),
                 Err(e) => last_err = Some(e),
             }
