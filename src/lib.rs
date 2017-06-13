@@ -1,3 +1,58 @@
+//! A Hyper `NetworkConnector` which offers a connection timeout.
+//!
+//! Hyper's default `HttpConnector` does not offer a configurable timeout for
+//! the establishment of new connections, so connect calls may block for long
+//! periods of time if some addresses don't respond. The `HttpTimeoutConnector` 
+//! allows an upper bound to be placed on the time taken by the connection
+//! process.
+//!
+//! # Note
+//!
+//! The timeout is applied separately to each of the IP addresses associated
+//! with the host.
+//!
+//! # Examples
+//!
+//! Connecting to HTTP sites:
+//!
+//! ```
+//! extern crate hyper;
+//! extern crate hyper_timeout_connector;
+//!
+//! use hyper::Client;
+//! use hyper_timeout_connector::HttpTimeoutConnector;
+//! use std::time::Duration;
+//!
+//! fn main() {
+//!     let mut connector = HttpTimeoutConnector::new();
+//!     connector.set_connect_timeout(Some(Duration::from_secs(30)));
+//!     let client = Client::with_connector(connector);
+//!
+//!     let response = client.get("http://google.com").send().unwrap();
+//! }
+//! ```
+//!
+//! Connecting to HTTPS sites:
+//!
+//! ```ignore
+//! extern crate hyper;
+//! extern crate hyper_timeout_connector;
+//!
+//! use hyper::Client;
+//! use hyper::net::HttpsConnector;
+//! use hyper_timeout_connector::HttpTimeoutConnector;
+//! use std::time::Duration;
+//!
+//! fn main() {
+//!     let mut connector = HttpTimeoutConnector::new();
+//!     connector.set_connect_timeout(Some(Duration::from_secs(30)));
+//!
+//!     let ssl_client = make_ssl_client();
+//!     let connector = HttpsConnector::with_connector(ssl_client, connector);
+//!     let client = Client::with_connector(connector);
+//!
+//!     let response = client.get("https://google.com").send().unwrap();
+//! }
 extern crate hyper;
 extern crate socket2;
 
@@ -7,19 +62,25 @@ use std::net::{TcpStream, SocketAddr, ToSocketAddrs};
 use socket2::{SockAddr, Socket, Domain, Type};
 use std::io;
 
+/// A Hyper `NetworkConnector` which offers a connction timeout.
 pub struct HttpTimeoutConnector {
     connect_timeout: Option<Duration>,
 }
 
 impl HttpTimeoutConnector {
+    /// Creates a new `HttpTimeoutConnector`.
+    ///
+    /// The connector initially has no connection timeout.
     pub fn new() -> HttpTimeoutConnector {
         HttpTimeoutConnector { connect_timeout: None }
     }
 
+    /// Returns the connection timeout.
     pub fn connect_timeout(&self) -> Option<Duration> {
         self.connect_timeout
     }
 
+    /// Sets the connection timeout.
     pub fn set_connect_timeout(&mut self, timeout: Option<Duration>) {
         self.connect_timeout = timeout;
     }
