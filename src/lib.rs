@@ -4,7 +4,7 @@ extern crate socket2;
 use hyper::net::{NetworkConnector, HttpStream};
 use std::time::Duration;
 use std::net::{TcpStream, SocketAddr, ToSocketAddrs};
-use socket2::{Socket, Domain, Type};
+use socket2::{SockAddr, Socket, Domain, Type};
 use std::io;
 
 pub struct HttpTimeoutConnector {
@@ -13,9 +13,7 @@ pub struct HttpTimeoutConnector {
 
 impl HttpTimeoutConnector {
     pub fn new() -> HttpTimeoutConnector {
-        HttpTimeoutConnector {
-            connect_timeout: None,
-        }
+        HttpTimeoutConnector { connect_timeout: None }
     }
 
     pub fn connect_timeout(&self) -> Option<Duration> {
@@ -32,9 +30,10 @@ impl HttpTimeoutConnector {
             SocketAddr::V6(_) => Domain::ipv6(),
         };
         let socket = Socket::new(domain, Type::stream(), None)?;
+        let addr = SockAddr::from(*addr);
         match self.connect_timeout {
-            Some(timeout) => socket.connect_timeout(addr, timeout)?,
-            None => socket.connect(addr)?,
+            Some(timeout) => socket.connect_timeout(&addr, timeout)?,
+            None => socket.connect(&addr)?,
         }
 
         Ok(socket.into())
@@ -46,7 +45,8 @@ impl NetworkConnector for HttpTimeoutConnector {
 
     fn connect(&self, host: &str, port: u16, scheme: &str) -> hyper::Result<HttpStream> {
         if scheme != "http" {
-            return Err(io::Error::new(io::ErrorKind::InvalidInput, "invalid scheme for http").into());
+            return Err(io::Error::new(io::ErrorKind::InvalidInput, "invalid scheme for http")
+                           .into());
         }
 
         let mut last_err = None;
@@ -57,9 +57,12 @@ impl NetworkConnector for HttpTimeoutConnector {
             }
         }
 
-        Err(last_err.unwrap_or_else(|| {
-            io::Error::new(io::ErrorKind::InvalidInput, "could not resolve to any addresses")
-        }).into())
+        Err(last_err
+                .unwrap_or_else(|| {
+                                    io::Error::new(io::ErrorKind::InvalidInput,
+                                                   "could not resolve to any addresses")
+                                })
+                .into())
     }
 }
 
