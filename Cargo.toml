@@ -2,6 +2,11 @@
 name = "hyper-timeout-connector"
 version = "0.1.0"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
+license = "MIT/Apache-2.0"
+description = "A Hyper `NetworkConnector` which offers a connection timeout"
+repository = "https://github.com/sfackler/hyper-timeout-connector"
+documentation = "https://docs.rs/hyper-timeout-connector/0.1.0/hyper_timeout_connector"
+readme = "README.md"
 
 [dependencies]
 hyper = "0.10"

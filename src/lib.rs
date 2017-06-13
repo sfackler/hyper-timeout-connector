@@ -53,6 +53,8 @@
 //!
 //!     let response = client.get("https://google.com").send().unwrap();
 //! }
+#![doc(html_root_url="https://docs.rs/hyper-timeout-connector/0.1.0")]
+#![warn(missing_docs)]
 extern crate hyper;
 extern crate socket2;
 
